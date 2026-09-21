@@ -38,6 +38,26 @@ public class User {
     protected User() {
     }
 
+    public User(
+            UUID id,
+            Company company,
+            String username,
+            String email,
+            String passwordHash,
+            boolean active,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
+        this.id = id;
+        this.company = company;
+        this.username = username;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.active = active;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -68,5 +88,20 @@ public class User {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public void updateProfile(
+            String username,
+            String email,
+            LocalDateTime updatedAt
+    ) {
+        this.username = username;
+        this.email = email;
+        this.updatedAt = updatedAt;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+        this.updatedAt = LocalDateTime.now();
     }
 }
