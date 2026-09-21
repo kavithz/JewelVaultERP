@@ -70,8 +70,34 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // Username/email uniqueness validation will be expanded later.
-        return toResponse(user);
+        if (userRepository.findByUsername(request.username())
+                .filter(existingUser -> !existingUser.getId().equals(id))
+                .isPresent()) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+
+        if (userRepository.findByEmail(request.email())
+                .filter(existingUser -> !existingUser.getId().equals(id))
+                .isPresent()) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+
+        user.updateProfile(
+                request.username(),
+                request.email(),
+                LocalDateTime.now()
+        );
+
+        return toResponse(userRepository.save(user));
+    }
+
+    public UserResponse updateStatus(UUID id, boolean active) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        user.setActive(active);
+
+        return toResponse(userRepository.save(user));
     }
 
     private UserResponse toResponse(User user) {
