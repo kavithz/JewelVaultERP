@@ -5,6 +5,8 @@ import com.jewelvaulterp.company.repository.CompanyRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class CompanyService {
@@ -17,5 +19,9 @@ public class CompanyService {
 
     public List<Company> getAllCompanies() {
         return companyRepository.findAll();
+    }
+
+    public Optional<Company> getCompany(UUID id) {
+        return companyRepository.findById(id);
     }
 }

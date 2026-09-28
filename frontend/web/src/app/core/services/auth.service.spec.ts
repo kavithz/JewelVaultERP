@@ -1,14 +1,21 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { firstValueFrom } from 'rxjs';
 import { AuthService, PREVIEW_ACCESS_PASSWORD } from './auth.service';
 
 describe('AuthService preview login', () => {
   beforeEach(() => {
     localStorage.clear();
-    TestBed.configureTestingModule({ providers: [AuthService] });
+    sessionStorage.clear();
+    TestBed.configureTestingModule({ providers: [AuthService, provideHttpClient(), provideHttpClientTesting()] });
   });
 
-  afterEach(() => localStorage.clear());
+  afterEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
 
   it('accepts kavith with the exact preview password', async () => {
     const auth = TestBed.inject(AuthService);
@@ -17,6 +24,13 @@ describe('AuthService preview login', () => {
     expect(user.authenticated).toBe(true);
     expect(user.username).toBe('kavith');
     expect(user.mode).toBe('preview');
+  });
+
+  it('keeps Preview login local and does not call the Real Mode endpoint', async () => {
+    const auth = TestBed.inject(AuthService);
+    await firstValueFrom(auth.loginPreview('preview-user', PREVIEW_ACCESS_PASSWORD));
+
+    TestBed.inject(HttpTestingController).expectNone('http://localhost:8080/api/auth/login');
   });
 
   it('accepts any other non-empty username with the exact preview password', async () => {

@@ -1,60 +1,81 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { take } from 'rxjs';
 import { Company, CreateProductRequest, Product, UpdateProductRequest } from '../../core/models/erp.models';
 import { notBlankValidator, positiveNumberValidator } from '../../core/forms/validators';
+import { AuthService } from '../../core/services/auth.service';
 import { CompanyService } from '../../core/services/company.service';
 import { MasterDataListState } from '../../core/services/master-data-list-state';
 import { ProductService } from '../../core/services/product.service';
-import { DataTableColumn, DataTableRowAction } from '../../shared/components/data-table/data-table';
+import { PreviewDataService, PreviewProduct } from '../../core/services/preview-data.service';
+import { DataTableColumn, DataTableComponent, DataTableRowAction } from '../../shared/components/data-table/data-table';
 import { MasterDataFormField, MasterDataFormPanelComponent } from '../../shared/components/master-data-form-panel/master-data-form-panel';
 import { MasterDataListComponent } from '../../shared/components/master-data-list/master-data-list';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header';
 
 @Component({
   selector: 'app-products-page',
   standalone: true,
-  imports: [MasterDataListComponent, MasterDataFormPanelComponent],
+  imports: [MasterDataListComponent, MasterDataFormPanelComponent, DataTableComponent, PageHeaderComponent],
   template: `
-    <app-master-data-list
-      title="Products"
-      subtitle="Product catalogue and jewellery specifications."
-      [columns]="columns"
-      [rows]="rows()"
-      [loading]="loading()"
-      [error]="error()"
-      createLabel="Add product"
-      [createDisabled]="scopeLoading() || scopeError() !== null || scopeOptions().length === 0 || submitting() || statusBusyId() !== null"
-      [actions]="actions"
-      [actionsDisabled]="submitting() || statusBusyId() !== null"
-      [busyRowId]="statusBusyId()"
-      [scopeNotice]="scopeNotice"
-      [scopeError]="scopeError()"
-      [mutationError]="editorOpen() ? null : mutationError()"
-      [successMessage]="successMessage()"
-      (createRequested)="openCreate()"
-      (rowAction)="handleRowAction($event)"
-      emptyTitle="No products found."
-      emptyMessage="Product records are not available yet."
-    >
-      @if (editorOpen()) {
-        <app-master-data-form-panel
-          master-data-editor
-          [form]="form"
-          [fields]="fields"
-          [title]="editing() ? 'Edit product' : 'Create product'"
-          [submitLabel]="editing() ? 'Save changes' : 'Create product'"
-          [submitting]="submitting()"
-          [error]="mutationError()"
-          (submitted)="save()"
-          (cancelled)="cancelEditor()"
-        />
-      }
-    </app-master-data-list>
+    @if (previewMode()) {
+      <app-page-header title="Products" subtitle="Sample products for Preview Mode." />
+      <p class="preview-data-note">Sample products only. Not jewellery items.</p>
+      <app-data-table
+        [columns]="previewColumns"
+        [rows]="rows()"
+        [loading]="loading()"
+        [error]="error()"
+        emptyTitle="No sample products available."
+        emptyMessage="Preview product examples could not be loaded."
+      />
+    } @else {
+      <app-master-data-list
+        title="Products"
+        subtitle="Product catalogue and jewellery specifications."
+        [columns]="columns"
+        [rows]="rows()"
+        [loading]="loading()"
+        [error]="error()"
+        createLabel="Add product"
+        [createDisabled]="scopeLoading() || scopeError() !== null || scopeOptions().length === 0 || submitting() || statusBusyId() !== null"
+        [actions]="actions"
+        [actionsDisabled]="submitting() || statusBusyId() !== null"
+        [busyRowId]="statusBusyId()"
+        [scopeNotice]="scopeNotice"
+        [scopeError]="scopeError()"
+        [mutationError]="editorOpen() ? null : mutationError()"
+        [successMessage]="successMessage()"
+        (createRequested)="openCreate()"
+        (rowAction)="handleRowAction($event)"
+        emptyTitle="No products found."
+        emptyMessage="Product records are not available yet."
+      >
+        @if (editorOpen()) {
+          <app-master-data-form-panel
+            master-data-editor
+            [form]="form"
+            [fields]="fields"
+            [title]="editing() ? 'Edit product' : 'Create product'"
+            [submitLabel]="editing() ? 'Save changes' : 'Create product'"
+            [submitting]="submitting()"
+            [error]="mutationError()"
+            (submitted)="save()"
+            (cancelled)="cancelEditor()"
+          />
+        }
+      </app-master-data-list>
+    }
   `,
+  styles: [`.preview-data-note { margin: 0 0 0.75rem; color: var(--secondary-text); font-size: 0.82rem; }`],
 })
 export class ProductsPageComponent extends MasterDataListState<Product> {
   private readonly productService = inject(ProductService);
   private readonly companyService = inject(CompanyService);
+  private readonly authService = inject(AuthService);
+  private readonly previewDataService = inject(PreviewDataService);
   private recordId: string | null = null;
+  readonly previewMode = signal(false);
 
   readonly form = new FormGroup({
     companyId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -86,6 +107,16 @@ export class ProductsPageComponent extends MasterDataListState<Product> {
     { key: 'status', label: 'Status' },
   ];
 
+  readonly previewColumns: DataTableColumn[] = [
+    { key: 'title', label: 'Product' },
+    { key: 'brand', label: 'Brand' },
+    { key: 'sku', label: 'SKU' },
+    { key: 'category', label: 'Category' },
+    { key: 'price', label: 'Price' },
+    { key: 'stock', label: 'Stock' },
+    { key: 'availabilityStatus', label: 'Availability' },
+  ];
+
   readonly scopeNotice = 'The list endpoint returns records across companies. Choose a company explicitly when creating a product.';
 
   get fields(): MasterDataFormField[] {
@@ -105,6 +136,29 @@ export class ProductsPageComponent extends MasterDataListState<Product> {
 
   constructor() {
     super();
+    if (this.authService.isPreviewAuthenticated()) {
+      this.previewMode.set(true);
+      this.previewDataService.getProducts().pipe(take(1)).subscribe({
+        next: (response) => {
+          this.rows.set(response.products.map((product: PreviewProduct) => ({
+            id: product.id,
+            title: product.title,
+            brand: product.brand ?? '—',
+            sku: product.sku,
+            category: product.category,
+            price: product.price,
+            stock: product.stock,
+            availabilityStatus: product.availabilityStatus,
+          })));
+          this.loading.set(false);
+        },
+        error: (error: unknown) => {
+          this.error.set(error instanceof Error ? error.message : 'Preview product examples are unavailable.');
+          this.loading.set(false);
+        },
+      });
+      return;
+    }
     this.load(this.productService.list(), (product) => ({
       ...product,
       status: product.active ? 'Active' : 'Inactive',
