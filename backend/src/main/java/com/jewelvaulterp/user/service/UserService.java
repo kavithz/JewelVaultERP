@@ -38,6 +38,13 @@ public class UserService {
                 .toList();
     }
 
+    public List<UserResponse> getUsersByCompany(UUID companyId) {
+        return userRepository.findByCompanyId(companyId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     public UserResponse createUser(CreateUserRequest request) {
         Company company = companyRepository.findById(request.companyId())
                 .orElseThrow(() -> new IllegalArgumentException("Company not found"));
@@ -88,6 +95,26 @@ public class UserService {
                 LocalDateTime.now()
         );
 
+        return toResponse(userRepository.save(user));
+    }
+
+    public UserResponse updateUser(UUID id, UUID companyId, UpdateUserRequest request) {
+        User user = userRepository.findByIdAndCompanyId(id, companyId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (userRepository.findByUsername(request.username())
+                .filter(existingUser -> !existingUser.getId().equals(id))
+                .isPresent()) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+
+        if (userRepository.findByEmail(request.email())
+                .filter(existingUser -> !existingUser.getId().equals(id))
+                .isPresent()) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+
+        user.updateProfile(request.username(), request.email(), LocalDateTime.now());
         return toResponse(userRepository.save(user));
     }
 
