@@ -1,1 +1,103 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+	color-scheme: light;
+	--primary: #1e3a8a;
+	--primary-dark: #172554;
+	--primary-light: #dbeafe;
+	--emerald: #047857;
+	--emerald-light: #d1fae5;
+	--gold: #c9a227;
+	--gold-light: #f5e7b2;
+	--ruby: #b91c1c;
+	--ruby-light: #fee2e2;
+	--amethyst: #7c3aed;
+	--amethyst-light: #ede9fe;
+	--app-bg: #f7f7f5;
+	--sidebar-bg: var(--primary-dark);
+	--header-bg: #fffefa;
+	--surface: #ffffff;
+	--surface-soft: #faf9f6;
+	--surface-elevated: #ffffff;
+	--primary-text: #1f2937;
+	--secondary-text: #6b7280;
+	--text-primary: var(--primary-text);
+	--text-secondary: var(--secondary-text);
+	--text-muted: #9ca3af;
+	--accent: var(--gold);
+	--accent-strong: var(--primary);
+	--border-color: #e5e7eb;
+	--success: var(--emerald);
+	--danger: var(--ruby);
+	--warning: var(--gold);
+	--sidebar-text: #f8fafc;
+	--sidebar-muted: #b8c5df;
+	--sidebar-active: rgb(201 162 39 / 16%);
+	--white: #ffffff;
+	--shadow-md: 0 16px 40px rgb(23 37 84 / 14%);
+	--shadow-soft: 0 3px 12px rgb(23 37 84 / 6%);
+	--radius-lg: 0.75rem;
+	--transition-fast: 160ms ease;
+	--font-sans: Inter, 'Plus Jakarta Sans', Manrope, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	min-height: 100%;
+	margin: 0;
+}
+
+body {
+	min-height: 100vh;
+	font-family: var(--font-sans);
+	font-size: 0.9375rem;
+	font-weight: 400;
+	line-height: 1.5;
+	background: var(--app-bg);
+	color: var(--primary-text);
+}
+
+button,
+input,
+select,
+textarea {
+	font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+	outline: 3px solid rgb(201 162 39 / 55%);
+	outline-offset: 2px;
+}
+
+.credentials-download {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	width: fit-content;
+	max-width: 100%;
+	margin: 0 auto;
+	color: var(--primary);
+	font-size: 0.78rem;
+	line-height: 1.35;
+	text-decoration: underline;
+}
+
+.credentials-download svg {
+	width: 1rem;
+	height: 1rem;
+	flex: 0 0 auto;
+}
+
+::selection {
+	color: var(--primary-dark);
+	background: var(--gold-light);
+}
