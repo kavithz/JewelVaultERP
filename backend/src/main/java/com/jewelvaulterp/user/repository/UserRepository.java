@@ -23,6 +23,20 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query(value = "SELECT ur.role_id FROM user_roles ur WHERE ur.user_id = :userId", nativeQuery = true)
     List<UUID> findUserRoleIds(@Param("userId") UUID userId);
 
+    @Query(value = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM users u
+                JOIN user_roles ur ON ur.user_id = u.id
+                JOIN roles r ON r.id = ur.role_id
+                WHERE u.active = TRUE
+                  AND r.active = TRUE
+                  AND UPPER(r.name) = 'ADMIN'
+                  AND r.company_id = u.company_id
+            )
+            """, nativeQuery = true)
+    boolean existsActiveAdmin();
+
     @Modifying
     @Query(value = "INSERT INTO user_roles (user_id, role_id) VALUES (:userId, :roleId)", nativeQuery = true)
     void assignRoleToUser(@Param("userId") UUID userId, @Param("roleId") UUID roleId);
