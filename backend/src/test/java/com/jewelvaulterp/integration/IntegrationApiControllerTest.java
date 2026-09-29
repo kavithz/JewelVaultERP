@@ -17,8 +17,10 @@ import com.jewelvaulterp.payment.entity.PaymentMethod;
 import com.jewelvaulterp.payment.entity.PaymentStatus;
 import com.jewelvaulterp.payment.entity.PaymentType;
 import com.jewelvaulterp.payment.repository.PaymentRepository;
+import com.jewelvaulterp.permission.repository.PermissionRepository;
 import com.jewelvaulterp.product.entity.Product;
 import com.jewelvaulterp.product.repository.ProductRepository;
+import com.jewelvaulterp.role.repository.RoleRepository;
 import com.jewelvaulterp.sale.entity.Sale;
 import com.jewelvaulterp.sale.entity.SaleStatus;
 import com.jewelvaulterp.sale.repository.SaleRepository;
@@ -27,6 +29,7 @@ import com.jewelvaulterp.supplier.repository.SupplierRepository;
 import com.jewelvaulterp.tax.entity.Tax;
 import com.jewelvaulterp.tax.entity.TaxType;
 import com.jewelvaulterp.tax.repository.TaxRepository;
+import com.jewelvaulterp.user.repository.UserRepository;
 import com.jewelvaulterp.warehouse.entity.Warehouse;
 import com.jewelvaulterp.warehouse.repository.WarehouseRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -91,6 +94,15 @@ class IntegrationApiControllerTest {
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private PermissionRepository permissionRepository;
+
     private Company companyA;
     private Company companyB;
     private Branch branchA;
@@ -98,6 +110,9 @@ class IntegrationApiControllerTest {
 
     @BeforeEach
     void setUp() {
+        userRepository.deleteAll();
+        roleRepository.deleteAll();
+        permissionRepository.deleteAll();
         companyRepository.deleteAll();
         productRepository.deleteAll();
         customerRepository.deleteAll();

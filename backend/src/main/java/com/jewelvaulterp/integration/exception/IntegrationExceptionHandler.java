@@ -3,6 +3,8 @@ package com.jewelvaulterp.integration.exception;
 import com.jewelvaulterp.integration.dto.IntegrationErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +16,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.time.LocalDateTime;
 
-@RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
+@RestControllerAdvice(basePackages = "com.jewelvaulterp.integration")
 public class IntegrationExceptionHandler {
 
     @ExceptionHandler(CompanyNotFoundException.class)

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { finalize } from 'rxjs';
 import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header';
@@ -9,6 +9,7 @@ import { ErrorStateComponent } from '../../shared/components/error-state/error-s
 import { LoadingStateComponent } from '../../shared/components/loading-state/loading-state';
 import { CompanyService } from '../../core/services/company.service';
 import { DashboardService, DashboardSummary } from '../../core/services/dashboard.service';
+import { AuthService } from '../../core/services/auth.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -26,7 +27,23 @@ import { environment } from '../../../environments/environment';
   template: `
     <app-page-header title="Dashboard" subtitle="Operational overview for current company activity." />
 
-    @if (loading()) {
+    @if (isPreview()) {
+      <p class="preview-note" role="note">Preview dashboard layout only. Live ERP values are not displayed in Preview Mode.</p>
+      <section class="kpi-grid">
+        <app-kpi-card label="Total sales" value="N/A" icon="receipt" tone="gold"></app-kpi-card>
+        <app-kpi-card label="Purchases" value="N/A" icon="bag" tone="emerald"></app-kpi-card>
+        <app-kpi-card label="Expenses" value="N/A" icon="receipt" tone="amethyst"></app-kpi-card>
+        <app-kpi-card label="Inventory value" value="N/A" icon="boxes" tone="blue"></app-kpi-card>
+        <app-kpi-card label="Receivables" value="N/A" icon="building" tone="amethyst"></app-kpi-card>
+        <app-kpi-card label="Payables" value="N/A" icon="bag" tone="emerald"></app-kpi-card>
+      </section>
+      <section class="content-grid">
+        <app-card title="Sales summary"><dl class="stats-list"><div><dt>Today</dt><dd>N/A</dd></div><div><dt>This month</dt><dd>N/A</dd></div><div><dt>Customers</dt><dd>N/A</dd></div></dl></app-card>
+        <app-card title="Purchases summary"><dl class="stats-list"><div><dt>Today</dt><dd>N/A</dd></div><div><dt>Suppliers</dt><dd>N/A</dd></div><div><dt>Products</dt><dd>N/A</dd></div></dl></app-card>
+        <app-card title="Inventory overview"><dl class="stats-list"><div><dt>Stock value</dt><dd>N/A</dd></div><div><dt>Active users</dt><dd>N/A</dd></div><div><dt>Employees</dt><dd>N/A</dd></div></dl></app-card>
+        <app-card title="Operations snapshot"><p class="preview-empty">No preview activity is available.</p></app-card>
+      </section>
+    } @else if (loading()) {
       <app-loading-state></app-loading-state>
     } @else if (error()) {
       <app-error-state [message]="error() ?? 'Unable to load this data. Please try again.'"></app-error-state>
@@ -112,18 +129,26 @@ import { environment } from '../../../environments/environment';
         color: var(--secondary-text);
         font-size: 0.88rem;
       }
+      .preview-note { margin: 0 0 1rem; padding: .7rem .85rem; border: 1px solid var(--border-color); border-radius: .4rem; background: var(--surface-soft); color: var(--secondary-text); font-size: .85rem; }
+      .preview-empty { margin: 0; color: var(--secondary-text); font-size: .88rem; }
     `,
   ],
 })
 export class DashboardPageComponent {
+  private readonly authService = inject(AuthService);
   private readonly companyService = inject(CompanyService);
   private readonly dashboardService = inject(DashboardService);
 
+  readonly isPreview = computed(() => this.authService.isPreviewAuthenticated());
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly summary = signal<DashboardSummary | null>(null);
 
   constructor() {
+    if (this.isPreview()) {
+      this.loading.set(false);
+      return;
+    }
     this.loadDashboard();
   }
 

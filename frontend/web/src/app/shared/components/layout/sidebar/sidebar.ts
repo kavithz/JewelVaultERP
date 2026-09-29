@@ -134,6 +134,8 @@ export class SidebarComponent {
     { label: 'Sales', items: [{ label: 'Sales', path: '/sales', icon: 'receipt' }] },
     { label: 'Purchasing', items: [{ label: 'Purchases', path: '/purchases', icon: 'bag' }] },
     { label: 'People', items: [{ label: 'Employees', path: '/employees', icon: 'person' }] },
+    { label: 'Administration', items: [{ label: 'Roles & Permissions', path: '/roles-permissions', icon: 'users' }] },
+    { label: 'Finance', items: [{ label: 'Accounting & Reports', path: '/accounting', icon: 'receipt' }] },
   ];
 
   handleNavigationClick(event: MouseEvent): void {

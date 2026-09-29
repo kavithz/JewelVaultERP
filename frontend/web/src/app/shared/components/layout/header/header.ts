@@ -44,7 +44,7 @@ import { AuthService } from '../../../../core/services/auth.service';
             Notifications are not available in this preview.
           </div>
         }
-        <button class="logout-button" type="button" (click)="logout()">Logout</button>
+        <button class="logout-button" type="button" (click)="logout()">Sign Out</button>
       </div>
     </header>
   `,

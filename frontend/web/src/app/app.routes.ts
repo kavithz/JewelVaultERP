@@ -97,6 +97,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/purchases/purchase-details-page').then((module) => module.PurchaseDetailsPageComponent),
       },
       {
+        path: 'roles-permissions',
+        loadComponent: () => import('./features/roles-permissions/roles-permissions-page').then((module) => module.RolesPermissionsPageComponent),
+      },
+      {
+        path: 'accounting',
+        loadComponent: () => import('./features/accounting/accounting-page').then((module) => module.AccountingPageComponent),
+      },
+      {
         path: '**',
         loadComponent: () => import('./shared/components/not-found/not-found-page').then((module) => module.NotFoundPageComponent),
       },
