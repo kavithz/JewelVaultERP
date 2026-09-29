@@ -4,6 +4,7 @@ import com.jewelvaulterp.auth.dto.LoginRequest;
 import com.jewelvaulterp.auth.controller.AuthController;
 import com.jewelvaulterp.auth.service.AuthService;
 import com.jewelvaulterp.auth.service.CompanyOwnershipResolver;
+import com.jewelvaulterp.common.security.TenantAccessService;
 import com.jewelvaulterp.common.config.SecurityConfig;
 import com.jewelvaulterp.role.controller.RoleController;
 import com.jewelvaulterp.role.dto.CreateRoleRequest;
@@ -71,6 +72,7 @@ class AuthSecurityIntegrationTest {
         @MockitoBean private UserRepository userRepository;
         @MockitoBean private CompanyOwnershipResolver companyOwnershipResolver;
         @MockitoBean private RoleService roleService;
+        @MockitoBean private TenantAccessService tenantAccessService;
 
         @BeforeEach
         void setUp() {
@@ -79,6 +81,7 @@ class AuthSecurityIntegrationTest {
                 when(userRepository.findByIdAndCompanyId(UUID.fromString(TEST_USER_ID), UUID.fromString(TEST_COMPANY_ID)))
                                 .thenReturn(Optional.of(activeUser));
                 when(companyOwnershipResolver.belongsToCompany(any(), any(UUID.class))).thenReturn(true);
+                when(tenantAccessService.companyIdOf(any())).thenReturn(Optional.of(UUID.fromString(TEST_COMPANY_ID)));
         }
 
     @Test
@@ -108,13 +111,13 @@ class AuthSecurityIntegrationTest {
 
     @Test
     void protectedApiRejectsMissingBearerToken() throws Exception {
-        mockMvc.perform(get("/api/integration/health"))
+                mockMvc.perform(get("/api/security-probe"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void protectedApiRejectsInvalidBearerToken() throws Exception {
-        mockMvc.perform(get("/api/integration/health").header("Authorization", "Bearer not-a-jwt"))
+                mockMvc.perform(get("/api/security-probe").header("Authorization", "Bearer not-a-jwt"))
                 .andExpect(status().isUnauthorized());
     }
 

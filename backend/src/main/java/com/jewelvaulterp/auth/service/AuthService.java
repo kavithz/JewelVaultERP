@@ -34,7 +34,7 @@ public class AuthService {
     private final PermissionRepository permissionRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtEncoder jwtEncoder;
-        private final String issuer;
+    private final String issuer;
     private final long tokenTtlSeconds;
 
     public AuthService(
@@ -60,7 +60,7 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByUsername(request.username())
+        User user = userRepository.findByUsername(request.username().trim())
                 .orElseThrow(this::invalidCredentials);
         if (!user.isActive() || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw invalidCredentials();
@@ -71,12 +71,12 @@ public class AuthService {
         List<Role> roles = roleIds == null || roleIds.isEmpty()
                 ? List.of()
                 : roleRepository.findAllById(roleIds).stream()
-                        .filter(role -> role.isActive())
+                        .filter(Role::isActive)
                         .filter(role -> companyId.equals(role.getCompany().getId()))
-                        .sorted(Comparator.comparing(role -> role.getName()))
+                        .sorted(Comparator.comparing(Role::getName))
                         .toList();
 
-        List<String> roleNames = roles.stream().map(role -> role.getName()).toList();
+        List<String> roleNames = roles.stream().map(Role::getName).toList();
         List<String> permissions = roles.stream()
                 .flatMap(role -> permissionRepository.findRolePermissions(role.getId()).stream())
                 .map(permission -> permission.getName())

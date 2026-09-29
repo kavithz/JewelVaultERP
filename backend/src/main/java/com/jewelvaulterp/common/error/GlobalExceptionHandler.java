@@ -6,8 +6,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -45,9 +48,18 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, message, request.getRequestURI());
     }
 
-    @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class})
+            @ExceptionHandler(HttpMessageNotReadableException.class)
+            public ResponseEntity<ApiErrorResponse> handleUnreadableBody(
+                HttpMessageNotReadableException ex,
+                HttpServletRequest request) {
+            return buildResponse(HttpStatus.BAD_REQUEST,
+                "Malformed request body or invalid request data.",
+                request.getRequestURI());
+            }
+
+            @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMediaTypeNotSupportedException.class})
     public ResponseEntity<ApiErrorResponse> handleBadRequest(
-            RuntimeException ex,
+                Exception ex,
             HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST,
                 "Malformed request body or invalid request data.",
@@ -69,6 +81,24 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
         return buildResponse(HttpStatus.CONFLICT,
                 "The request could not be processed in the current state.",
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiErrorResponse> handleAuthenticationFailure(
+            AuthenticationException ex,
+            HttpServletRequest request) {
+        return buildResponse(HttpStatus.UNAUTHORIZED,
+                "Invalid username or password.",
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiErrorResponse> handleAccessDenied(
+            AccessDeniedException ex,
+            HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN,
+                "Access to this resource is denied.",
                 request.getRequestURI());
     }
 

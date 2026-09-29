@@ -475,3 +475,87 @@ export interface CreatePurchaseRequest {
   discountAmount: number;
   items: CreatePurchaseItemRequest[];
 }
+
+export interface RoleRecord {
+  id: string;
+  companyId: string;
+  name: string;
+  description: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PermissionRecord {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+export type AccountType = 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE';
+
+export interface AccountRecord {
+  id: string;
+  companyId: string;
+  accountCode: string;
+  name: string;
+  accountType: AccountType;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type JournalEntryStatus = 'DRAFT' | 'POSTED' | 'CANCELLED';
+
+export interface JournalEntryLineRecord {
+  id: string;
+  accountId: string;
+  description: string | null;
+  debitAmount: number;
+  creditAmount: number;
+}
+
+export interface JournalEntryRecord {
+  id: string;
+  companyId: string;
+  entryNumber: string;
+  entryDate: string;
+  description: string | null;
+  referenceNumber: string | null;
+  status: JournalEntryStatus;
+  totalDebit: number;
+  totalCredit: number;
+  lines: JournalEntryLineRecord[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AccountBalanceRecord {
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  accountType: AccountType;
+  debitTotal: number;
+  creditTotal: number;
+  balance: number;
+}
+
+export interface TrialBalanceReport {
+  accounts: AccountBalanceRecord[];
+  totalDebits: number;
+  totalCredits: number;
+}
+
+export interface ProfitLossReport {
+  revenue: number;
+  expenses: number;
+  netProfit: number;
+}
+
+export interface BalanceSheetReport {
+  assets: number;
+  liabilities: number;
+  equity: number;
+  netProfit: number;
+  totalLiabilitiesAndEquity: number;
+}

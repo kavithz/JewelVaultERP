@@ -54,7 +54,7 @@ const PREVIEW_CREDENTIALS_TEXT = [
           <fieldset class="auth-mode">
             <legend>Authentication mode</legend>
             <label><input type="radio" name="authentication-mode" [checked]="authMode() === 'preview'" (change)="setAuthMode('preview')" />Preview</label>
-            <label><input type="radio" name="authentication-mode" [checked]="authMode() === 'real'" (change)="setAuthMode('real')" />Real</label>
+            <label><input type="radio" name="authentication-mode" [checked]="authMode() === 'real'" (change)="setAuthMode('real')" />Sign in</label>
           </fieldset>
 
           @if (authMode() === 'preview') {
@@ -64,8 +64,8 @@ const PREVIEW_CREDENTIALS_TEXT = [
             </div>
           }
 
-          @if (errorMessage) {
-            <div class="alert" role="alert">{{ errorMessage }}</div>
+          @if (errorMessage()) {
+            <div class="alert" role="alert">{{ errorMessage() }}</div>
           }
 
           <form [formGroup]="form" (ngSubmit)="submit()">
@@ -75,7 +75,7 @@ const PREVIEW_CREDENTIALS_TEXT = [
             <label for="login-password">Password</label>
             <input id="login-password" formControlName="password" type="password" autocomplete="current-password" placeholder="Enter password" required />
 
-            <button type="submit" [disabled]="form.invalid || submitting">{{ submitting ? 'Signing in...' : 'Sign in' }}</button>
+            <button type="submit" [disabled]="form.invalid || submitting()">{{ submitting() ? 'Signing in...' : 'Sign in' }}</button>
             @if (authMode() === 'preview') {
               <a class="credentials-download" href="#" (click)="$event.preventDefault(); downloadPreviewCredentials()">
                 <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#text-file"></use></svg>
@@ -175,12 +175,12 @@ export class LoginComponent {
   });
 
   readonly authMode = signal<AuthMode>(environment.authMode);
-  submitting = false;
-  errorMessage = '';
+  readonly submitting = signal(false);
+  readonly errorMessage = signal('');
 
   setAuthMode(mode: AuthMode): void {
     this.authMode.set(mode);
-    this.errorMessage = '';
+    this.errorMessage.set('');
   }
 
   downloadPreviewCredentials(): void {
@@ -201,8 +201,8 @@ export class LoginComponent {
       return;
     }
 
-    this.submitting = true;
-    this.errorMessage = '';
+    this.submitting.set(true);
+    this.errorMessage.set('');
 
     const username = this.form.value.username ?? '';
     const password = this.form.value.password ?? '';
@@ -213,11 +213,11 @@ export class LoginComponent {
     loginRequest.subscribe({
       next: () => this.router.navigateByUrl('/dashboard'),
       error: (error: Error) => {
-        this.errorMessage = error.message || 'Unable to sign in right now. Please try again.';
-        this.submitting = false;
+        this.errorMessage.set(error.message || 'Unable to sign in right now. Please try again.');
+        this.submitting.set(false);
       },
       complete: () => {
-        this.submitting = false;
+        this.submitting.set(false);
       },
     });
   }
