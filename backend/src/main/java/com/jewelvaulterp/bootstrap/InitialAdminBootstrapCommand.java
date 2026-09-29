@@ -35,7 +35,7 @@ public final class InitialAdminBootstrapCommand {
             requiredEnvironmentVariable("JWT_SECRET");
 
             String username = requiredEnvironmentVariable("BOOTSTRAP_ADMIN_USERNAME");
-            String email = requiredEnvironmentVariable("BOOTSTRAP_ADMIN_EMAIL");
+            String email = optionalEnvironmentVariable("BOOTSTRAP_ADMIN_EMAIL");
             String password = requiredEnvironmentVariable("BOOTSTRAP_ADMIN_PASSWORD");
 
             System.setProperty("spring.flyway.enabled", "false");
@@ -78,6 +78,11 @@ public final class InitialAdminBootstrapCommand {
             throw new IllegalArgumentException("Required environment variable is missing: " + name);
         }
         return value;
+    }
+
+    private static String optionalEnvironmentVariable(String name) {
+        String value = System.getenv(name);
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private static void requireNeonDatabaseUrl(String jdbcUrl) {

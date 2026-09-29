@@ -11,7 +11,7 @@ export interface AuthUser {
   authenticated: boolean;
   mode: AuthMode;
   id?: string;
-  email?: string;
+  email?: string | null;
   companyId?: string;
   roles?: string[];
   permissions?: string[];
@@ -26,7 +26,7 @@ interface LoginResponse {
   user: {
     id: string;
     username: string;
-    email: string;
+    email: string | null;
     companyId: string;
     roles: string[];
     permissions: string[];

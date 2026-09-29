@@ -53,7 +53,8 @@ public class UserService {
             throw new IllegalArgumentException("Username already exists");
         }
 
-        if (userRepository.findByEmail(request.email()).isPresent()) {
+        String email = normalizeOptionalEmail(request.email());
+        if (email != null && userRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("Email already exists");
         }
 
@@ -63,7 +64,7 @@ public class UserService {
                 UUID.randomUUID(),
                 company,
                 request.username(),
-                request.email(),
+                email,
                 passwordEncoder.encode(request.password()),
                 true,
                 now,
@@ -137,5 +138,12 @@ public class UserService {
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );
+    }
+
+    private String normalizeOptionalEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        return email.trim();
     }
 }

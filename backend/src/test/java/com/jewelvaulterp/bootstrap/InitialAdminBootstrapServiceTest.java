@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -92,7 +93,6 @@ class InitialAdminBootstrapServiceTest {
                         .filter(role -> role.getId().equals(invocation.getArgument(0)))
                         .filter(role -> role.getCompany().getId().equals(invocation.getArgument(1))));
         when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User user = invocation.getArgument(0);
             savedUser.set(user);
@@ -109,7 +109,7 @@ class InitialAdminBootstrapServiceTest {
         stubEmptyDatabaseForBootstrap();
 
         InitialAdminBootstrapService.BootstrapResult result = bootstrapService.createInitialAdmin(
-                "admin", "admin@example.test", ADMIN_PASSWORD
+            "admin", null, ADMIN_PASSWORD
         );
 
         assertEquals("JewelVaultERP", savedCompany.get().getName());
@@ -120,6 +120,7 @@ class InitialAdminBootstrapServiceTest {
         assertEquals("ADMIN", savedRole.get().getName());
         assertEquals(savedCompany.get().getId(), savedUser.get().getCompany().getId());
         assertEquals("admin", savedUser.get().getUsername());
+        assertNull(savedUser.get().getEmail());
         assertNotEquals(ADMIN_PASSWORD, savedUser.get().getPasswordHash());
         assertTrue(passwordEncoder.matches(ADMIN_PASSWORD, savedUser.get().getPasswordHash()));
         assertEquals(savedCompany.get().getId(), result.companyId());
@@ -131,6 +132,7 @@ class InitialAdminBootstrapServiceTest {
     @Test
     void rerunRefusesWithoutCreatingDuplicates() {
         stubEmptyDatabaseForBootstrap();
+        when(userRepository.findByEmail("admin@example.test")).thenReturn(Optional.empty());
         AtomicInteger activeAdminChecks = new AtomicInteger();
         when(userRepository.existsActiveAdmin()).thenAnswer(invocation -> activeAdminChecks.getAndIncrement() > 0);
 
