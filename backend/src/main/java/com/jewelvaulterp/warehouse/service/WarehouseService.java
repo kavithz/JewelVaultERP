@@ -1,5 +1,6 @@
 package com.jewelvaulterp.warehouse.service;
 
+import com.jewelvaulterp.auth.service.CurrentUserAccess;
 import com.jewelvaulterp.branch.entity.Branch;
 import com.jewelvaulterp.branch.repository.BranchRepository;
 import com.jewelvaulterp.warehouse.dto.CreateWarehouseRequest;
@@ -18,13 +19,16 @@ public class WarehouseService {
 
     private final WarehouseRepository warehouseRepository;
     private final BranchRepository branchRepository;
+    private final CurrentUserAccess currentUserAccess;
 
     public WarehouseService(
             WarehouseRepository warehouseRepository,
-            BranchRepository branchRepository
+            BranchRepository branchRepository,
+            CurrentUserAccess currentUserAccess
     ) {
         this.warehouseRepository = warehouseRepository;
         this.branchRepository = branchRepository;
+        this.currentUserAccess = currentUserAccess;
     }
 
     public List<WarehouseResponse> getAllWarehouses() {
@@ -39,6 +43,8 @@ public class WarehouseService {
     ) {
         Branch branch = branchRepository.findById(request.branchId())
                 .orElseThrow(() -> new IllegalArgumentException("Branch not found"));
+
+        currentUserAccess.requireCompany(branch.getCompany().getId());
 
         if (warehouseRepository.findByBranchIdAndCode(
                 request.branchId(),

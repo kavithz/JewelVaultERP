@@ -1,36 +1,42 @@
 package com.jewelvaulterp.common.config;
 
-import org.springframework.core.convert.converter.Converter;
+import com.jewelvaulterp.common.error.ApiErrorResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import tools.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             CorsConfigurationSource corsConfigurationSource,
-            Converter<Jwt, ? extends AbstractAuthenticationToken> jwtAuthenticationConverter
-    )
-            throws Exception {
+            JwtAuthenticationConverter jwtAuthenticationConverter,
+            ObjectMapper objectMapper
+    ) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
@@ -38,7 +44,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info", "/error").permitAll()
-                        .requestMatchers("/api/auth/login", "/api/integration/health").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers("/api/integration/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/**").hasRole("ADMIN")
@@ -48,22 +55,15 @@ public class SecurityConfig {
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(formLogin -> formLogin.disable())
                 .logout(logout -> logout.disable())
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
-                        jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
+                .exceptionHandling(errors -> errors
+                        .authenticationEntryPoint((request, response, exception) ->
+                                writeSecurityError(request, response, objectMapper, HttpStatus.UNAUTHORIZED))
+                        .accessDeniedHandler((request, response, exception) ->
+                                writeSecurityError(request, response, objectMapper, HttpStatus.FORBIDDEN)))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
 
         return http.build();
-    }
-
-    @Bean
-    public Converter<Jwt, ? extends AbstractAuthenticationToken> jwtAuthenticationConverter() {
-        return jwt -> {
-            var authorities = new java.util.ArrayList<SimpleGrantedAuthority>();
-            jwt.getClaimAsStringList("roles").forEach(role ->
-                    authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
-            jwt.getClaimAsStringList("permissions").forEach(permission ->
-                    authorities.add(new SimpleGrantedAuthority(permission)));
-            return new JwtAuthenticationToken(jwt, authorities, jwt.getSubject());
-        };
     }
 
     @Bean
@@ -72,10 +72,14 @@ public class SecurityConfig {
             @Value("${app.cors.allowed-methods:GET,POST,PUT,PATCH,DELETE,OPTIONS}") String allowedMethods,
             @Value("${app.cors.allowed-headers:Authorization,Content-Type,Accept,Origin,X-Requested-With,X-CSRF-TOKEN}") String allowedHeaders,
             @Value("${app.cors.max-age:3600}") long maxAge,
-            @Value("${app.cors.allow-credentials:true}") boolean allowCredentials) {
+            @Value("${app.cors.allow-credentials:false}") boolean allowCredentials) {
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(parseCsv(allowedOrigins));
+        List<String> origins = parseCsv(allowedOrigins);
+        if (allowCredentials && origins.contains("*")) {
+            throw new IllegalStateException("Credentialed CORS cannot use wildcard origins.");
+        }
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(parseCsv(allowedMethods));
         configuration.setAllowedHeaders(parseCsv(allowedHeaders));
         configuration.setExposedHeaders(List.of("Authorization", "Location"));
@@ -92,5 +96,22 @@ public class SecurityConfig {
                 .map(value -> value.trim())
                 .filter(value -> !value.isEmpty())
                 .toList();
+    }
+
+    private void writeSecurityError(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            ObjectMapper objectMapper,
+            HttpStatus status
+    ) throws IOException {
+        response.setStatus(status.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        objectMapper.writeValue(response.getOutputStream(), new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                status == HttpStatus.UNAUTHORIZED ? "Authentication is required." : "Access is denied.",
+                request.getRequestURI()
+        ));
     }
 }

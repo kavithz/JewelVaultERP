@@ -1,5 +1,6 @@
 package com.jewelvaulterp.common.security;
 
+import com.jewelvaulterp.common.error.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
@@ -39,7 +40,7 @@ public class TenantResponseBodyAdvice implements ResponseBodyAdvice<Object> {
         if (!(authentication instanceof JwtAuthenticationToken) || body == null) {
             return body;
         }
-        if (body.getClass().getPackageName().contains(".common.error.")) {
+        if (body instanceof ApiErrorResponse) {
             return body;
         }
         if (hasExplicitCompanyScope()) {
