@@ -1,0 +1,30 @@
+previews:
+  generation: "off"
+
+services:
+  - type: web
+    name: jewelvault-erp-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    autoDeployTrigger: "off"
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SERVER_PORT
+        value: "10000"
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ISSUER
+        value: jewelvault-erp
+      - key: JWT_EXPIRATION_SECONDS
+        value: "900"
+      - key: APP_CORS_ALLOWED_ORIGINS
+        sync: false
