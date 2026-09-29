@@ -63,10 +63,10 @@ public class InitialAdminBootstrapService {
         }
 
         if (userRepository.existsActiveAdmin()) {
-            throw new IllegalStateException("An active ADMIN already exists; bootstrap refused.");
+            throw new BootstrapAlreadyInitializedException();
         }
         if (companyRepository.count() != 0 || userRepository.count() != 0 || roleRepository.count() != 0) {
-            throw new IllegalStateException("Database contains tenant or identity data; bootstrap refused.");
+            throw new BootstrapAlreadyInitializedException();
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -85,5 +85,12 @@ public class InitialAdminBootstrapService {
     }
 
     public record BootstrapResult(UUID companyId, UUID adminRoleId, UUID adminUserId) {
+    }
+
+    public static final class BootstrapAlreadyInitializedException extends IllegalStateException {
+
+        public BootstrapAlreadyInitializedException() {
+            super("Database contains an ADMIN or existing tenant/identity data; bootstrap refused.");
+        }
     }
 }

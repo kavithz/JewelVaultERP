@@ -12,7 +12,7 @@ export interface User {
   id: string;
   companyId?: string;
   username: string;
-  email?: string;
+  email?: string | null;
   roleName?: string;
   enabled?: boolean;
   active?: boolean;
