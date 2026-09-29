@@ -19,7 +19,7 @@ A full-stack Jewellery Enterprise Resource Planning system.
 ### Deployment
 - Vercel
 - Neon PostgreSQL
-- Java-compatible backend hosting
+- Render
 
 ## Deployment Configuration
 
